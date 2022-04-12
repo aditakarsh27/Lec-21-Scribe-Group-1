@@ -1,0 +1,246 @@
+%
+% This is the LaTeX template file for lecture notes for CS294-8,
+% Computational Biology for Computer Scientists.  When preparing 
+% LaTeX notes for this class, please use this template.
+%
+% To familiarize yourself with this template, the body contains
+% some examples of its use.  Look them over.  Then you can
+% run LaTeX on this file.  After you have LaTeXed this file then
+% you can look over the result either by printing it out with
+% dvips or using xdvi.
+%
+% This template is based on the template for Prof. Sinclair's CS 270.
+
+\documentclass[11pt, twosides]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{xcolor}
+\usepackage{wrapfig}
+\setlength{\oddsidemargin}{0.25 in}
+\setlength{\evensidemargin}{-0.25 in}
+\setlength{\topmargin}{-0.6 in}
+\setlength{\textwidth}{6.5 in}
+\setlength{\textheight}{8.5 in}
+\setlength{\headsep}{0.75 in}
+\setlength{\parindent}{0 in}
+\setlength{\parskip}{0.1 in}
+
+%
+% The following commands set up the lecnum (lecture number)
+% counter and make various numbering schemes work relative
+% to the lecture number.
+%
+\newcounter{lecnum}
+\renewcommand{\thepage}{\thelecnum-\arabic{page}}
+\renewcommand{\thesection}{\thelecnum.\arabic{section}}
+\renewcommand{\theequation}{\thelecnum.\arabic{equation}}
+\renewcommand{\thefigure}{\thelecnum.\arabic{figure}}
+\renewcommand{\thetable}{\thelecnum.\arabic{table}}
+
+%
+% The following macro is used to generate the header.
+%
+\newcommand{\lecture}[4]{
+%   \pagestyle{myheadings}
+   \thispagestyle{plain}
+   \newpage
+   \setcounter{lecnum}{#1}
+   \setcounter{page}{1}
+   \noindent
+   \begin{center}
+   \framebox{
+      \vbox{\vspace{2mm}
+    \hbox to 6.28in { {\bf CS 419M Introduction to Machine Learning
+                        \hfill Spring 2021-22} }
+       \vspace{4mm}
+       \hbox to 6.28in { {\Large \hfill Lecture #1: #2  \hfill} }
+       \vspace{2mm}
+       \hbox to 6.28in { {\it Lecturer: #3 \hfill Scribe: #4} }
+      \vspace{2mm}}
+   }
+   \end{center}
+   \markboth{Lecture #1: #2}{Lecture #1: #2}
+}
+
+%
+% Convention for citations is authors' initials followed by the year.
+% For example, to cite a paper by Leighton and Maggs you would type
+% \cite{LM89}, and to cite a paper by Strassen you would type \cite{S69}.
+% (To avoid bibliography problems, for now we redefine the \cite command.)
+% Also commands that create a suitable format for the reference list.
+% \renewcommand{\cite}[1]{[#1]}
+% \def\beginrefs{\begin{list}%
+%         {[\arabic{equation}]}{\usecounter{equation}
+%          \setlength{\leftmargin}{2.0truecm}\setlength{\labelsep}{0.4truecm}%
+%          \setlength{\labelwidth}{1.6truecm}}}
+% \def\endrefs{\end{list}}
+% \def\bibentry#1{\item[\hbox{[#1]}]}
+
+%Use this command for a figure; it puts a figure in wherever you want it.
+%usage: \fig{NUMBER}{SPACE-IN-INCHES}{CAPTION}
+% \newcommand{\fig}[3]{
+% 			\vspace{#2}
+% 			\begin{center}
+% 			Figure \thelecnum.#1:~#3
+% 			\end{center}
+% 	}
+% Use these for theorems, lemmas, proofs, etc.
+\newtheorem{theorem}{Theorem}[lecnum]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+% \newenvironment{proof}{{\bf Proof:}}{\hfill\rule{2mm}{2mm}}
+
+% **** IF YOU WANT TO DEFINE ADDITIONAL MACROS FOR YOURSELF, PUT THEM HERE:
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+%\lecture{**LECTURE-NUMBER**}{**DATE**}{**LECTURER**}{**SCRIBE**}
+\lecture{21}{Feature Selection and Auto Learning}{Abir De}{Group 1}
+%\lecture{x}{Title}{Abir De}{Group y}
+
+\section{Problem Definition for Feature Selection}
+
+Now in regression we say that our objective is to minimise loss i.e.
+$$\min_{w, \ \ ||w||_0 <=k} \sum_{i \in D} l(w^Tx_i, y_i) $$
+
+Here, $x \in \R^d$. Where $d$ is the number of features. 
+
+Now we want to reduce the number of features because-
+\begin{enumerate}
+    \item \textbf{Efficiency}: We want our model to work faster, want less calculations and thus reduce the number of parameters/ features.
+    
+    \item \textbf{Privacy}: We do not want to include certain features in the training process. Suppose a person's hobby is rock climbing. Then if the google tracks the location of the person and is somehow tracked by the insurance company then the insurance company would have higher premium for the person which is undesirable.
+    
+    \item \textbf{Resource Constraint}: Suppose I want to run the application on my smartphone. Now the space I can allocate in my phone is low but I still want faster and better results. Thus I would want to have less number of features.
+\end{enumerate}
+
+\section{ Naive Method}
+
+\begin{enumerate}
+    \item For a given k, find all set of combinations of features possible.
+    \item Find MSE for all the set of features.
+    \item Select the features with minimum MSE.
+\end{enumerate}
+
+Now the problem is that there ${d \choose k}$ combinations possible which are exponent in $f(d)$. Thus there would be too many combinations to choose from.
+
+\section{Successive Algorithm}
+\begin{enumerate}
+    \item Take $k' = 1$. Find the feature $w_{01}$ which minimizes the MSE.
+    \item Take $k' = 2$. In addition to $w_{01}$ find $w_{02}$ which minimises the MSE given $w_{01}$ is already selected.
+    \item Thus find a single feature in ech step which minimises the MSE given the features shown in previous step are selected.
+    \item Repeat till $k$ features are selected.
+\end{enumerate}
+
+Thus our goal is to-
+$$ \min_{w, S} \sum_{i\in D} l(w^Tx_i, y_i) \text{ \ \ \ given, \ \ \ } |S|<=k \text{ \ and, \ } S\in \{1,2,...d\}$$
+
+
+Here, $S$ is the set containing the indices of features.
+Let,
+$$F(S) = \min_{w, S} \sum_{i\in D} l(w^Tx_i, y_i) \text{ \ \ \ given, \ \ \ } |S|<=k \text{ \ and, \ } S\in \{1,2,...d\}$$
+
+Note: $F(S \ U \ e) <= F(S)$
+
+Thus our algorithm is-
+\begin{enumerate}
+    \item Start with S(0) = $\phi$
+    \item For step t = 0 to k-1
+    \begin{enumerate}
+         Find e(t) for given $S(t)$ such that, $F(S(t+1) \ U \ e(t+1))$ is minimised.
+    \end{enumerate}
+    \item Report S(k) and thus find the optimal $k$ features in the data space.
+\end{enumerate}
+
+The solution $F$ satisfies the following properties-
+\begin{enumerate}
+    \item Monotonicity
+    \item $$\frac{F(S \ U \ e) - F(S)}{F(T \ U \ e) - F(T)} \geq \alpha$$ whenever $S \leq T$. This is known as weak submodularity. If $\alpha = 1$, it is called submodular.
+\end{enumerate}
+Perturbing features is therefore analogous to perturbing data.
+
+Let $F^*$ be an $F$ we get by our approach. $F_{opt}$ is something we get by solving the original objective directly.\\
+$$F^* = O(F_{opt})$$
+$$F^* \leq \frac{F_{opt}}{1-e^{-\alpha}}$$
+Here, $\alpha \leq 1$\\
+This is because-\\
+\begin{align*}
+    F(S) - F(S\ U\ e) &\geq 0\\
+    F(S) - F(S\ U\ e) &\leq \alpha(F(T)-F(T\ U \ e))\\
+    &\mbox{if $\alpha > 1$ and $T=S$,}\\
+     F(S) - F(S\ U\ e) &< 0\\
+     \mbox{which is a contradiction.}
+\end{align*}
+
+\section{Active Learning}
+\[(x_1, x_2, ...... x_n)_{n = 10^4}\] \\
+Now we want to label all these \(10^4\) samples. But it is costly to label all of them manually. Give \(|s| = 10^3\) to label. Use this to label all remaining samples.\\\\
+In regression, \(\sum \limits_{i \in D} l(y_i, w^Tx_i) + \lambda ||w||\) But we can't minimize with respect to w as \(y_i\) are unknown.\\
+\begin{align*}
+    min F(x)&    \\
+X \subset Y &= 10k\\
+|x| &< 1000\\
+\end{align*}
+Now, we are assuming, \(y_i = w^Tx_i + \varepsilon _i\) \\\\
+If given \(y_i\) and \(x_i\) both:
+\begin{align*}
+    var(w) = f(x)\\
+    E[||w-w^*||]^2 \longrightarrow E[w] = w^*\\
+\end{align*}
+\begin{align*}
+    Note: w = (\Sigma x_ix_i^T)\Sigma x_i(y_i) \\
+= (\Sigma x_ix_i^T)\Sigma x_i(w^Tx_i + \varepsilon _i) \\
+Note: \varepsilon_i \sim \mathcal{N}(0,1) \\
+w = (\Sigma x_ix_i^T)\Sigma x_i(x_i^Tw^T + \varepsilon _i)\\
+[w^*x_i = x_i^Tw^*]\\
+w = w^* + V^{-1} \sum_i x_i \epsilon_i
+\end{align*}
+
+Thus, 
+\begin{align*}
+    E[w] &= w^*\\
+    E[\|w-w^*\|^2] &= E[\|y^{-1}\sum_i x_i \varepsilon_i\|^2]\\
+    E[\|w-w^*\|^2] &=Trace(V^{-1})\\
+    \mbox{Note: }& E(\varepsilon_i \varepsilon_j) = 0 \mbox{ (no correlation)}\\
+     E[\|w-w^*\|^2] &=E[(\sum_i x_i \varepsilon_i)^T (V^T V^{-1})(\sum_i x_i \varepsilon_i)\\
+     &= Trace[(\sum_i x_i \varepsilon_i) (V^{-1})^2 (\sum_i x_i \varepsilon_i)]\\
+     &= Trace[ (V^{-1})^2(\sum_i x_i \varepsilon_i) (\sum_j x_j \varepsilon_j)]\\
+     &= Trace[ (V^{-1})^2(\sum_i x_ix_i^T]\\
+     &= Trace(V^{-1})
+\end{align*}
+
+
+
+
+
+
+\section{Group Details and Individual Contribution}
+\begin{itemize}
+    \item (19D070003) Adit Akarsh: Section 21.3
+    \item (190100007) Aditya Vijay Jain:  Section 21.1, 21.2
+    \item (200110048) Ishita Tyagi: Section 21.4
+\end{itemize}
+
+
+
+
+
+
+
+
+
+
+\end{document}
+
+
+
+
+
